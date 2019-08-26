@@ -34,6 +34,7 @@ def tracert(sHost, timeout, hops):
         # Get rid of double-spaced lines.
         _o = output.split('\r\n')
         output = '\n'.join(_o)
+        print(output)
         pass
 
     except Exception as e:
@@ -45,6 +46,8 @@ if __name__ == "__main__":
     print(f'Checking connection to {host}')
 
     tracert_OK_done = False
+    tracert_fail_done = False
+
     if not os.path.exists(log_file_name):
         with open(log_file_name, 'w') as log:
             log.write('Written by ISP_monitor.py\n\n')
@@ -58,44 +61,57 @@ if __name__ == "__main__":
         log.write(log_msg)
         log.flush()
 
-        while not (kbhit() and getch() == b'\x1B'):
-            ok_count = 0
-            while pingOk(host, 1000):
-                if kbhit():
-                    continue
-                time.sleep(monitor_timeout)
-                ok_count += monitor_timeout+1
-                print(f'\rOK for {ok_count} seconds', end='')
-                if not tracert_OK_done:
-                    tracert_OK_done,log_msg = tracert(host, 1000, 15)
-                    if tracert_OK_done:
-                        log.write(log_msg)
-                        log.flush()
-            print(f'\nFailed at {time.ctime()}')
-            log_msg = 'Failed at {}, {} seconds after last failure ended\n'. \
-                format(time.ctime(), ok_count)
-            log.write(log_msg)
-            log.flush()
-            fail_count = 0
-            while not pingOk(host, 1000):
-                # Check for reconnect every second
-                if kbhit():
-                    continue
-                # ping timeout has already taken a second
-                # time.sleep(reconnect_time)
-                fail_count += 1
-                print(f'\rFailed for {fail_count} seconds', end='')
-                __,log_msg = tracert(host, 1000, 15)
+        try:
+            while True:
+                ok_count = 0
+                while pingOk(host, 1000):
+                    if kbhit() and getch() == b'\x1B':
+                        raise
+                    time.sleep(monitor_timeout)
+                    ok_count += monitor_timeout+1
+                    if not tracert_OK_done:
+                        print('\nRunning tracert when connected...')
+                        tracert_OK_done,log_msg = tracert(host, 50, 15)
+                        if tracert_OK_done:
+                            log.write('tracert when connected:\n')
+                            log.write(log_msg)
+                            log.flush()
+                        ok_count += 10
+                    print(f'\rOK for {ok_count} seconds', end='')
+
+                print(f'\nFailed at {time.ctime()}')
+                log_msg = 'Failed at {}, {} seconds after last failure ended\n'. \
+                    format(time.ctime(), ok_count)
+                log.write(log_msg)
+                log.flush()
+                fail_count = 0
+                while not pingOk(host, 1000):
+                    # Check for reconnect every second
+                    if kbhit() and getch() == b'\x1B':
+                        raise
+                    # ping timeout has already taken a second
+                    # time.sleep(reconnect_time)
+                    fail_count += 1
+                    if not tracert_fail_done and fail_count > 5:
+                        print('\nRunning tracert when not connected...')
+                        tracert_fail_done,log_msg = tracert(host, 50, 15)
+                        if tracert_fail_done:
+                            log.write('tracert when connected:\n')
+                            log.write(log_msg)
+                            log.flush()
+                        fail_count += 10
+                    print(f'\rFailed for {fail_count} seconds', end='')
+
+                print('\nReconnected at {}'.format(time.ctime()))
+                log_msg = 'Reconnected at {} after {} second failure\n'. \
+                    format(time.ctime(), fail_count)
                 log.write(log_msg)
                 log.flush()
 
-            print('\nReconnected at {}'.format(time.ctime()))
-            log_msg = 'Reconnected at {} after {} second failure\n'. \
-                format(time.ctime(), fail_count)
-            log.write(log_msg)
-            log.flush()
-
+        except:
+            pass # Esc pressed
         log_msg = '\n\nLogging stopped by user at {}\n'. \
             format(time.ctime())
         log.write(log_msg)
         log.flush()
+        print(log_msg)
