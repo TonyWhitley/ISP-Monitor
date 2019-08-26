@@ -340,3 +340,6 @@ ASALocalRun/
 healthchecksdb
 /ISP_Monitor.exe
 /ISP Monitor.pyproj
+/build/ISP_Monitor
+/env
+/ISP_Monitor.spec
