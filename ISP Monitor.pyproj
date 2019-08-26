@@ -23,6 +23,10 @@
   <ItemGroup>
     <Compile Include="ISP_Monitor.py" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="makeexe.bat" />
+    <Content Include="pyInstallerSetup.bat" />
+  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
        Visual Studio and specify your pre- and post-build commands in
